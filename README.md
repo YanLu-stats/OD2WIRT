@@ -88,7 +88,8 @@ res <- M1.mcmc(Y = Y,
                 par1 = Y.sim$par1,
                 par2 = Y.sim$par2,
                 M = 5000,
-                L = 1000,
+                K = 1000,
+                L = 1,    # untempered 
                 step.sizes = c(0.05, 0.02, 0.01))
 
 ```
