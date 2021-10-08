@@ -124,3 +124,25 @@ Calculate the marginal DIC for model comparison:
 source("mDIC.R")
 
 ```
+
+### Full Model
+
+Estimate the full model using the tempered {M}C{M}C algorithm:
+```{r example}
+source("mcmc_M2.R") ## Main function of MCMC for the full model
+```
+
+
+```{r example}
+## Initials
+
+res2 <- M2.tmcmc(Y = Y,
+                 t_resp = resp.T,
+                 par1 = par1.sim,
+                 par2 = par1.sim,
+                 M = 5000,
+                 L = 1000,
+                 step.sizes = c(0.05, 0.02, 0.01))
+  
+
+```
