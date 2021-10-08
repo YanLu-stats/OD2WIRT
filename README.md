@@ -22,19 +22,8 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of OD2WIRT is to ...
+The goal of OD2WIRT is to provide a MCMC routine for the Two-way Outlier Detection Model.
 
-## Installation
-
-You can install the released version of OD2WIRT from [CRAN](https://CRAN.R-project.org) with:
-
-``` r
-install.packages("OD2WIRT")
-```
-Load the package
-```{r example}
-library(OD2WIRT)
-```
 
 ## Example: Data Generation
 
@@ -99,8 +88,39 @@ res <- M1.mcmc(Y = Y.sim$resp,
                 par1 = Y.sim$par1,
                 par2 = Y.sim$par2,
                 M = 5000,
-                step.sizes = c(0.05, 0.05, 0.01, 0.01, 0.01))
+                L = 1000,
+                step.sizes = c(0.05, 0.02, 0.01))
 
+```
+Obtain posterior samples and summary statistics like the mean:
+```{r example}
 
-# od2wirt_r
+post.xi <- res$par1$xi
+post.xi.mean <- colMeans(post.xi)
+post.eta <- res$par1$eta
+post.eta.mean <- colMeans(post.eta)
+
+post.theta <- res$par1$theta
+post.theta.mean <- colMeans(post.theta)
+post.beta <- res$par1$beta
+post.beta.mean <- colMeans(post.beta)
+
+post.delta <- res$par2$delta
+post.delta.mean <- mean(post.delta)
+post.pi_xi <- res$par2$pi_xi
+post.pi_xi.mean <- mean(post.pi_xi)
+post.pi_eta <- res$par2$pi_eta
+post.pi_eta.mean <- mean(post.pi_eta)
+post.s2_theta <- res$par2$s2_theta
+post.s2_theta.mean <- mean(post.s2_theta)
+post.mu_beta <- res$par2$mu_beta
+post.mu_beta.mean <- mean(post.mu_beta)
+post.s2_beta <- res$par2$s2_beta
+post.s2_beta.mean <- mean(post.s2_beta)
+```
+
+Calculate the marginal DIC for model comparison:
+```{r example}
+source("mDIC.R")
+
 ```
