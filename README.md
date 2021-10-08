@@ -84,7 +84,7 @@ Then specify the data, initial values for parameters, the lengths of burn-in and
 ```{r example}
 ## Initials
 
-res <- M1.mcmc(Y = Y.sim$resp, 
+res <- M1.mcmc(Y = Y, 
                 par1 = Y.sim$par1,
                 par2 = Y.sim$par2,
                 M = 5000,
@@ -127,7 +127,7 @@ source("mDIC.R")
 
 ### Full Model
 
-Estimate the full model using the tempered {M}C{M}C algorithm:
+Estimate the full model using the tempered {M}C{M}C algorithm. Let $L=1$ if the untempered version of {M}C{M}C is used:
 ```{r example}
 source("mcmc_M2.R") ## Main function of MCMC for the full model
 ```
@@ -141,7 +141,7 @@ res2 <- M2.tmcmc(Y = Y,
                  par1 = par1.sim,
                  par2 = par1.sim,
                  M = 5000,
-                 L = 1000,
+                 L = 1,
                  step.sizes = c(0.05, 0.02, 0.01))
   
 
