@@ -1,9 +1,10 @@
-#' ------------------------------------------------------------------------
-#' irt.mcmc: 
-#' ---------
+
+#' -----------------------------------------------------------------------
+#' A Parallel-Tempered MCMC Algorithm for Estimating the Full Model
+#' -----------------------------------------------------------------------
 #' 
-#' ---   Return  : 
-#' ----------------------------------------------------------------------------
+#' ---   Return  : Posterior samples etc.
+#' -----------------------------------------------------------------------
 
 
 M2.tmcmc <- function(Y, t_resp,
@@ -11,43 +12,24 @@ M2.tmcmc <- function(Y, t_resp,
                              par2,
                              M,
                              L,
+                             K,
                              step.sizes) {
   
   #' Arguments
   #' ---------------------------------------------
   #' Y           : N x J data matrix
-  #' 
-  #' par1        : a list of parameters on the 1st level: theta, xi, eta, beta, ...
+  #' t_resp      : N x J response time matrix
+  #' par1        : a list of parameters on the 1st level: latent variables
   #' par2        : a list of parameters on the 2nd level
-  #' hyp_par     :
   #' nburnin     : 
   #' M           : the total No. of iterations
+  #' L           : for calculating mDIC
+  #' K           : No. of parallel chains 
   #' step.sizes  :
-  #' L           : No. of chains
   #' --------------------------------------------
   
   N <- nrow(Y)
   J <- ncol(Y)
-  
-  
-  alpha_theta = hyp_par$alpha_theta
-  beta_theta = hyp_par$beta_theta
-  
-  alpha_beta = hyp_par$alpha_beta
-  beta_beta = hyp_par$beta_beta
-  
-  mu_b = hyp_par$mu_b
-  s2_b = hyp_par$s2_b
-  
-  alpha_xi = hyp_par$alpha_xi
-  beta_xi = hyp_par$beta_xi
-  
-  alpha_eta = hyp_par$alpha_eta
-  beta_eta = hyp_par$beta_eta
-  
-  alpha_delta = hyp_par$alpha_delta
-  beta_delta = hyp_par$beta_delta
-  
   
   
   #' Initialisation
@@ -192,7 +174,8 @@ M2.tmcmc <- function(Y, t_resp,
                                  step.sizes = step.sizes[1],
                                  s2_theta = Sigma[[m-1]][[l]][1,], xi = xi[m-1,,l], 
                                  eta = eta[m-1,,l], beta = beta[m-1,,l], 
-                                 delta = delta[m-1,l])
+                                 delta = delta[m-1,l], 
+                                 N = N, J = J, Y = Y)
       
       tau[m,,l] <- MH_gaussian(log.f = f.tau,
                                p = N,
@@ -200,11 +183,14 @@ M2.tmcmc <- function(Y, t_resp,
                                step.sizes = step.sizes[1],
                                s2_tau = Sigma[[m-1]][[l]][,2], xi = xi[m-1,,l], 
                                eta = eta[m-1,,l], alpha = alpha[m-1,,l], 
-                               gamma = gamma[m-1,l], kappa = kappa[m-1,l])
+                               gamma = gamma[m-1,l], kappa = kappa[m-1,l], 
+                               N = N, J = J, t_resp = t_resp)
       
-      xi[m,,l] <- sample.xi(xi[m-1,,l], pi_xi[m-1,l], theta[m,,l], 
-                            eta[m-1,,l], beta[m-1,,l], delta[m-1,l])
-      
+      xi[m,,l] <- sample.xi(xi = xi[m-1,,l], pi_xi = pi_xi[m-1,l], theta = theta[m,,l], 
+                            eta = eta[m-1,,l], beta = beta[m-1,,l], delta = delta[m-1,l], 
+                            tau = tau[m-1,,l], alpha = alpha[m-1,,l], 
+                            gamma = gammadelta[m-1,l], kappa = kappa[m-1,l],
+                            N = N, J = J, Y = Y, t_resp = t_resp)
       
       beta[m,,l] <- MH_gaussian(log.f = f.beta,
                                 p = J,
@@ -213,7 +199,8 @@ M2.tmcmc <- function(Y, t_resp,
                                 mu_beta = Mu[m-1, 1, l], 
                                 s2_beta = Omega[[m-1]][[l]][1,], 
                                 xi = xi[m,,l], theta = theta[m,,l], 
-                                eta = eta[m-1,,l], delta = delta[m-1,l])
+                                eta = eta[m-1,,l], delta = delta[m-1,l],
+                                N = N, J = J, Y = Y)
       
       alpha[m,,l] <- MH_gaussian(log.f = f.alpha,
                                  p = J,
@@ -222,72 +209,95 @@ M2.tmcmc <- function(Y, t_resp,
                                  mu_alpha = Mu[m-1, 2, l], 
                                  s2_alpha = Omega[[m-1]][[l]][,2], 
                                  xi = xi[m,,l], tau = tau[m,,l], eta = eta[m-1,,l], 
-                                 gamma = gamma[m-1,l], kappa = kappa[m-1,l])
+                                 gamma = gamma[m-1,l], kappa = kappa[m-1,l],
+                                 N = N, J = J, t_resp = t_resp)
       
-      eta[m,,l] <- sample.eta(eta[m-1,,l], pi_eta[m-1,l], xi[m,,l], theta[m,,l], 
-                              beta[m,,l], delta[m-1,l])
+      eta[m,,l] <- sample.eta(eta = eta[m-1,,l], pi_eta = pi_eta[m-1,l], theta = theta[m,,l], 
+                              xi = xi[m,,l], beta = beta[m,,l], delta = delta[m-1,l], 
+                              tau = tau[m,,l], alpha = alpha[m,,l], 
+                              gamma = gammadelta[m-1,l], kappa = kappa[m-1,l],
+                              N = N, J = J, Y = Y, t_resp = t_resp)
       
       delta[m,l] <- MH_gaussian(log.f = f.delta,
                                 p = 1,
                                 curr = delta[m-1,l],
                                 step.sizes = step.sizes[3],
-                                alpha_delta = alpha_delta, beta_delta = beta_delta, 
+                                sigma_delta = 2.5, 
                                 xi = xi[m,,l], theta = theta[m,,l], 
-                                eta = eta[m,,l], beta = beta[m,,l])
+                                eta = eta[m,,l], beta = beta[m,,l],
+                                N = N, J = J, Y = Y)
       
       gamma[m,l] <- MH_gaussian(log.f = f.gamma,
                                 p = 1,
                                 curr = gamma[m-1,l],
                                 step.sizes = step.sizes[3],
-                                alpha_gamma = alpha_gamma, beta_gamma = beta_gamma, 
+                                sigma_gamma = 2.5,
                                 xi = xi[m,,l], tau = tau[m,,l], 
-                                eta = eta[m,,l], alpha = alpha[m,,l])
+                                eta = eta[m,,l], alpha = alpha[m,,l],
+                                N = N, J = J, t_resp = t_resp)
       
       kappa[m,l] <- MH_gaussian(log.f = f.kappa,
                                 p = 1,
                                 curr = kappa[m-1,l],
                                 step.sizes = step.sizes[3],
-                                alpha_kappa = alpha_kappa, beta_kappa = beta_kappa, 
+                                alpha_kappa = 0.001, beta_kappa = 0.001, 
                                 xi = xi[m,,l], tau = tau[m,,l], 
-                                eta = eta[m,,l], alpha = alpha[m,,l])
+                                eta = eta[m,,l], alpha = alpha[m,,l],
+                                N = N, J = J, t_resp = t_resp)
       
       
-      ## Update Pars
-      
-      pi_xi[m,l] <- rbeta(1, (alpha_xi + sum(xi[m,,l])), (beta_xi + sum(xi[m,,l]==0)))
-      
-      pi_eta[m,l] <- rbeta(1, (alpha_eta + sum(eta[m,,l])), (beta_eta + sum(eta[m,,l]==0)))
-      
-      Sigma[[m]][[l]] <- MCMCpack::riwish(v = N + 3,
-                                          S = matrix(c(2,0,0,2), ncol = 2) 
-                                          + matrix(c(sum(theta[m,,l]^2), 
-                                                     sum(theta[m,,l]*tau[m,,l]), 
-                                                     sum(theta[m,,l]*tau[m,,l]), 
-                                                     sum(tau[m,,l]^2)), ncol = 2))
-      
-      Mu[m,,l] <- solve(matrix(c(1/25, 0, 0, 1/25), ncol = 2) + solve(J*Omega[[m-1]][[l]]))*
-        solve(Omega[[m-1]][[l]])*
-        
-        Omega[[m]][[l]] <- MCMCpack::riwish(v = J + 3,
-                                            S = matrix(c(2,0,0,2), ncol = 2) 
-                                            + matrix(c(sum((beta[m,,l]-Mu[m,1,l])^2), 
-                                                       sum((beta[m,,l]-Mu[m,1,l])*(alpha[m,,l]-Mu[m,2,l])), 
-                                                       sum((beta[m,,l]-Mu[m,1,l])*(alpha[m,,l]-Mu[m,2,l])), 
-                                                       sum((alpha[m,,l]-Mu[m,2,l])^2)), ncol = 2))
+      pi_xi[m,l] <- MH_weight(log.f = f.pi_xi,
+                              p = 1,
+                              curr = pi_xi[m-1],
+                              step.size = step.sizes[3],
+                              xi = xi[m,,l], alpha_xi = 2, beta_xi = 2)
       
       
+      Sigma[[m]][[l]] <- MH_gaussian(log.f = f.Sigma,
+                                 p = 1,
+                                 curr = Sigma[[m-1]][[l]],
+                                 step.sizes = step.sizes[3],
+                                 theta = theta[m,,l], tau = tau[m,,l],
+                                 scale_Sigma = matrix(c(2,0,0,2), ncol = 2), 
+                                 df_Sigma = 2, N = N)
+      
+      
+      pi_eta[m,l] <- MH_weight(log.f = f.pi_eta,
+                               p = 1,
+                               curr = pi_eta[m-1],
+                               step.size = step.sizes[3],
+                               eta = eta[m,,l], alpha_eta = 2, beta_eta = 2)
+      
+      Mu[m,,l] <- MH_gaussian(log.f = f.mu_beta,
+                                p = 1,
+                                curr = Mu[m-1,,l],
+                                step.sizes = step.sizes[3],
+                                beta = beta[m,,l], alpha = alpha[m,,l],
+                                Omega = Omega[[m-1]][[l]],
+                                J = J)
+      
+      Omega[[m]][[l]] <- MH_gaussian(log.f = f.Omega,
+                                     p = 1,
+                                     curr = Omega[[m-1]][[l]],
+                                     step.sizes = step.sizes[3],
+                                     Mu = Mu[m,,l],
+                                     beta = beta[m,,l], alpha = alpha[m,,l],
+                                     scale_Omega = matrix(c(2,0,0,2), ncol = 2), 
+                                     df_Omega = 2, J = J)
+      
+
     } #' end of loop l
     
     
-    ## start the coupling update
+    ## coupling update
     
     swap1 <- c(swap1_index[l-1], swap1_index[l-1] + 1)   
     
     log_A1 <- f.pi_xi(pi_xi[m,swap1[1]], xi[m,,swap1[1]], 
-                      alpha_xi = alpha_xi, beta_xi = beta_xi) + 
-      f.pi_xi(pi_xi[m,swap1[2]], xi[m,,swap1[2]], alpha_xi = alpha_xi, beta_xi = beta_xi) -
-      f.pi_xi(pi_xi[m,swap1[2]], xi[m,,swap1[1]], alpha_xi = alpha_xi, beta_xi = beta_xi) - 
-      f.pi_xi(pi_xi[m,swap1[1]], xi[m,,swap1[2]], alpha_xi = alpha_xi, beta_xi = beta_xi) 
+                      alpha_xi = 2, beta_xi = 2) + 
+      f.pi_xi(pi_xi[m,swap1[2]], xi[m,,swap1[2]], alpha_xi = 2, beta_xi = 2) -
+      f.pi_xi(pi_xi[m,swap1[2]], xi[m,,swap1[1]], alpha_xi = 2, beta_xi = 2) - 
+      f.pi_xi(pi_xi[m,swap1[1]], xi[m,,swap1[2]], alpha_xi = 2, beta_xi = 2) 
     
     if (log(runif(1)) < log_A1) {
       pi_xi[m,swap1] = rev(pi_xi[m,swap1])
@@ -298,10 +308,10 @@ M2.tmcmc <- function(Y, t_resp,
     swap2 <- swap1 
     
     log_A2 <- f.pi_eta(pi_eta[m,swap2[1]], eta[m,,swap2[1]], 
-                       alpha_eta = alpha_eta, beta_eta = beta_eta) + 
-      f.pi_eta(pi_eta[m,swap2[2]], eta[m,,swap2[2]], alpha_eta = alpha_eta, beta_eta = beta_eta) -
-      f.pi_eta(pi_eta[m,swap2[2]], eta[m,,swap2[1]], alpha_eta = alpha_eta, beta_eta = beta_eta) - 
-      f.pi_eta(pi_eta[m,swap2[1]], eta[m,,swap2[2]], alpha_eta = alpha_eta, beta_eta = beta_eta) 
+                       alpha_eta = 2, beta_eta = 2) + 
+      f.pi_eta(pi_eta[m,swap2[2]], eta[m,,swap2[2]], alpha_eta = 2, beta_eta = 2) -
+      f.pi_eta(pi_eta[m,swap2[2]], eta[m,,swap2[1]], alpha_eta = 2, beta_eta = 2) - 
+      f.pi_eta(pi_eta[m,swap2[1]], eta[m,,swap2[2]], alpha_eta = 2, beta_eta = 2) 
     
     
     if (log(runif(1)) < log_A2) {
