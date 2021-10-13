@@ -7,6 +7,7 @@ output: html_document
 
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -16,12 +17,27 @@ knitr::opts_chunk$set(
 )
 ```
 
+
+
 # OD2WIRT
 
 <!-- badges: start -->
 <!-- badges: end -->
 
 The goal of OD2WIRT is to provide a MCMC routine for the Two-way Outlier Detection Model.
+
+
+## Installation
+
+You can install the released version of OD2WIRT from [CRAN](https://CRAN.R-project.org) with:
+
+``` r
+install.packages("OD2WIRT")
+```
+Load the package
+```{r example}
+library(OD2WIRT)
+```
 
 
 ## Example: Data Generation
