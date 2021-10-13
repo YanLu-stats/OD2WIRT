@@ -11,7 +11,7 @@ M2.tmcmc <- function(Y, t_resp,
                              par1,
                              par2,
                              M,
-                             L,
+                             L=1,
                              K,
                              step.sizes) {
   
@@ -86,74 +86,6 @@ M2.tmcmc <- function(Y, t_resp,
   
   eta <- array(dim = c(M, J, L))
   eta[1,,] <- rep(rbinom(J, 1, pi_eta[1,]))
-  
-  
-  #' -------------------------------------------------------------------------
-  #' log posterior density functions of theta, tau, beta, alpha, delta, gamma
-  #' -------------------------------------------------------------------------
-  
-  f.theta <- function(theta, s2_theta, xi, eta, beta, delta){
-    
-    temp1 <- theta %*% t(rep(1, J)) - rep(1, N) %*% t(beta) + xi %*% t(eta) * delta #'N x J
-    temp <- rowSums(Y * temp1 - log(1 + exp(temp1))) + log(dnorm(theta, 0, sqrt(s2_theta)))
-    return(temp)
-  }
-  
-  f.tau <- function(tau, s2_tau, xi, eta, alpha, gamma, kappa){
-    
-    temp2 <- rep(1, N) %*% t(alpha) - tau %*% t(rep(1, J)) - xi %*% t(eta) * gamma #'N x J
-    temp <- rowSums(log(dlnorm(t_resp, temp2, sqrt(kappa)))) + log(dnorm(tau, 0, sqrt(s2_tau)))
-    return(temp)
-  }
-  
-  
-  f.beta <- function(beta, mu_beta, s2_beta, xi, theta, eta, delta){
-    
-    temp1 <- theta %*% t(rep(1, J)) - rep(1, N) %*% t(beta) + xi %*% t(eta) * delta
-    temp <- colSums(Y * temp1 - log(1 + exp(temp1))) + log(dnorm(beta, mu_beta, sqrt(s2_beta)))
-    return(temp)
-  }
-  
-  f.alpha <- function(alpha, mu_alpha, s2_alpha, xi, tau, eta, gamma, kappa){
-    
-    temp2 <- rep(1, N) %*% t(alpha) - tau %*% t(rep(1, J)) - xi %*% t(eta) * gamma #'N x J
-    temp <- colSums(log(dlnorm(t_resp, temp2, sqrt(kappa)))) + log(dnorm(tau, 0, sqrt(s2_tau)))
-    return(temp)
-  }
-  
-  f.delta <- function(delta, alpha_delta, beta_delta, xi, theta, eta, beta){
-    
-    temp1 <- theta %*% t(rep(1, J)) - rep(1, N) %*% t(beta) + xi %*% t(eta) * delta
-    temp <- sum(Y * temp1 - log(1 + exp(temp1))) + log(dgamma(delta, alpha_delta, scale = beta_delta))
-    return(temp)
-  }
-  
-  f.gamma <- function(gamma, alpha_gamma, beta_gamma, xi, tau, eta, alpha){
-    
-    temp2 <- rep(1, N) %*% t(alpha) - tau %*% t(rep(1, J)) - xi %*% t(eta) * gamma #'N x J
-    temp <- sum(log(dlnorm(t_resp, temp2, sqrt(kappa)))) + log(dgamma(gamma, alpha_gamma, scale = beta_gamma))
-  }
-  
-  f.kappa <- function(kappa, alpha_kappa, beta_kappa, xi, tau, eta, alpha){
-    
-    temp2 <- rep(1, N) %*% t(alpha) - tau %*% t(rep(1, J)) - xi %*% t(eta) * gamma #'N x J
-    temp <- sum(log(dlnorm(t_resp, temp2, sqrt(kappa)))) 
-    + log(dgamma(kappa, alpha_kappa, scale = beta_kappa))
-    
-  }
-  
-  
-  #' -------------------------------------
-  #'  Posterior samplers for pi_xi, pi_eta
-  #' -------------------------------------
-  
-  f.pi_xi <- function(pi_xi, xi, alpha_xi, beta_xi) {
-    log(dbeta(pi_xi, alpha_xi, beta_xi)) + sum(xi*log(pi_xi) + (1-xi)*log(1-pi_xi))
-  }
-  
-  f.pi_eta <- function(pi_eta, eta, alpha_eta, beta_eta) {
-    log(dbeta(pi_eta, alpha_eta, beta_eta)) + sum(eta*log(pi_eta) + (1-eta)*log(1-pi_eta))
-  }
   
   
   #'---------------
@@ -286,9 +218,9 @@ M2.tmcmc <- function(Y, t_resp,
                                      df_Omega = 2, J = J)
       
 
-    } #' end of loop l
+     #' end of loop l
     
-    
+    if (l==1) break
     ## coupling update
     
     swap1 <- c(swap1_index[l-1], swap1_index[l-1] + 1)   
@@ -302,8 +234,6 @@ M2.tmcmc <- function(Y, t_resp,
     if (log(runif(1)) < log_A1) {
       pi_xi[m,swap1] = rev(pi_xi[m,swap1])
       xi[m,,swap1] = rev(xi[m,,swap1])
-    }
-    
     
     swap2 <- swap1 
     
@@ -317,9 +247,9 @@ M2.tmcmc <- function(Y, t_resp,
     if (log(runif(1)) < log_A2) {
       pi_eta[m,swap2] = rev(pi_eta[m,swap2])
       eta[m,,swap2] = rev(eta[m,,swap2])
-    }
-    
-    ## end of the coupling update
+    } 
+    } ## end of the coupling update
+  } #' end of loop l
     
   } #' end of loop m
   
