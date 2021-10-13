@@ -62,19 +62,10 @@ par2.sim <- Y.sim$par2
 
 The example below shows you how to estimate the reduced model using an Metropolis-Hastings (MH) based {M}C{M}C algorithm.
 
-Source the log density functions and {M}C{M}C samplers first:
-```{r example}
-source("MH_rw.R") ## Random-walk MH sampler
-source("log_target.R") ## 
-source("mcmc_M1.R")  ## Main function of MCMC for the reduced model
-
-#' functions from other R files may be used as well
-```
-
-Alternatively, you can source R files needed to implement the algorithm all at once:
+Source R files needed to implement the algorithm all at once:
 ```{r example}
 file.sources <- list.files(pattern="*.R")
-sapply(file.sources,source, .GlobalEnv)
+sapply(file.sources, source, .GlobalEnv)
 ```
 
 Then specify the data, initial values for parameters, the number of {M}C{M}C iterations, step sizes for Metropolis Hasting samplers, and temperature spacing. Run the algorithm:
