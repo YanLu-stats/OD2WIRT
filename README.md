@@ -27,19 +27,6 @@ knitr::opts_chunk$set(
 The goal of OD2WIRT is to provide a MCMC routine for the Two-way Outlier Detection Model.
 
 
-## Installation
-
-You can install the released version of OD2WIRT from [CRAN](https://CRAN.R-project.org) with:
-
-``` r
-install.packages("OD2WIRT")
-```
-Load the package
-```{r example}
-library(OD2WIRT)
-```
-
-
 ## Example: Data Generation
 
 This is an example showing how to simulate binary item response data and response time data.
