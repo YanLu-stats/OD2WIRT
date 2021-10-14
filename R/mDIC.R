@@ -1,6 +1,6 @@
 
 #'-----------------------------------------
-#' M1: Reduced Model
+#' M1: Model with the Cheatint Effect
 #'-----------------------------------------
 
 ## Posterior mean of the deviance OR posterior expected deviance
