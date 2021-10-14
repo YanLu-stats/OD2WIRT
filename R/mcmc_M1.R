@@ -11,18 +11,18 @@ M1.mcmc <- function(Y,
                     par2,
                     M,
                     L,
+                    temps = 2^(0:3),
                     step.sizes,
                     seed = 123) {
   
   #' Arguments
   #' ---------------------------------------------
   #' Y           : N x J data matrix
-  #' 
   #' par1        : a list of parameters on the 1st level: theta, xi, eta, beta, ...
   #' par2        : a list of parameters on the 2nd level
-  #' hyp_par     :
-  #' nburnin     : 
   #' M           : the total No. of iterations
+  #' L           : replicates of posterior samples for calculating mDIC
+  #' temps       : temperature ladders for tempered MCMC
   #' step.sizes  :
   #' --------------------------------------------
   
