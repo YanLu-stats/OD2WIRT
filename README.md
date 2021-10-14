@@ -35,7 +35,7 @@ file.sources <- list.files(pattern="*.R")
 sapply(file.sources, source, .GlobalEnv)
 ```
 
-Y.sim <- simdata_M2(N = 1000, J = 50, pi_xi = 0.2, pi_eta = 0.5,
+Y.sim <- simData_M2(N = 1000, J = 50, pi_xi = 0.2, pi_eta = 0.5,
                     s2_theta = 0.5, cov_theta_tau = 0.2, s2_tau = 0.5,
                     s2_beta = 0.8, cov_beta_alpha = 0.2, s2_alpha = 0.5,
                     mu_beta = 0, mu_alpha = 0, delta = 1, gamma = 1, kappa = 0.5)
@@ -72,7 +72,7 @@ res <- M1.mcmc(Y = Y,
                 par2 = Y.sim$par2,
                 M = 5000,
                 L = 1000, 
-                K = 10,
+                temps = 2^(0:3),
                 step.sizes = c(0.05, 0.02, 0.01))
 
 ```
