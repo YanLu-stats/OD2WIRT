@@ -28,9 +28,12 @@ The goal of OD2WIRT is to provide a MCMC routine for the Two-way Outlier Detecti
 ## Example: Data Generation
 
 This is an example showing how to simulate binary item response data and response time data.
+Source R files needed to implement the algorithm all at once:
 
 ```{r example}
-source("simData.R")
+file.sources <- list.files(pattern="*.R")
+sapply(file.sources, source, .GlobalEnv)
+```
 
 Y.sim <- simdata_M2(N = 1000, J = 50, pi_xi = 0.2, pi_eta = 0.5,
                     s2_theta = 0.5, cov_theta_tau = 0.2, s2_tau = 0.5,
@@ -61,36 +64,15 @@ par2.sim <- Y.sim$par2
 ### Reduced Model
 
 The example below shows you how to estimate the reduced model using an Metropolis-Hastings (MH) based {M}C{M}C algorithm.
-
-Source R files needed to implement the algorithm all at once:
+Specify the data, initial values for parameters, the number of {M}C{M}C iterations, step sizes for Metropolis Hasting samplers, and temperature spacing. Run the algorithm. (To estimate the reduced model ($M_1$) without tempering, simply set $K=1$.)
 ```{r example}
-file.sources <- list.files(pattern="*.R")
-sapply(file.sources, source, .GlobalEnv)
-```
-
-Then specify the data, initial values for parameters, the number of {M}C{M}C iterations, step sizes for Metropolis Hasting samplers, and temperature spacing. Run the algorithm:
-```{r example}
-## Initials
-
+## 
 res <- M1.mcmc(Y = Y, 
                 par1 = Y.sim$par1,
                 par2 = Y.sim$par2,
                 M = 5000,
                 L = 1000, 
                 K = 10,
-                step.sizes = c(0.05, 0.02, 0.01))
-
-```
-To estimate the reduced model ($M_1$) without tempering, simply set $K=1$:
-```{r example}
-## Initials
-
-res <- M1.mcmc(Y = Y, 
-                par1 = Y.sim$par1,
-                par2 = Y.sim$par2,
-                M = 5000,
-                L = 1000, 
-                K = 1,
                 step.sizes = c(0.05, 0.02, 0.01))
 
 ```
@@ -124,10 +106,9 @@ post.s2_beta.mean <- mean(post.s2_beta)
 
 Marginal DIC (mDIC) is used to compare models. Calculate the marginal DIC for the reduced model ($M_1$) with the first 3,000 iterations as the burn-in: 
 ```{r example}
-source("mDIC.R")
-
+n.burnin = 3000
 D_bar <- mean(sapply(nburnin:res$M, function(m) 
-  dev_rep.fun(Y.real, res$rep$theta[[m]], res$rep$beta[[m]], res$rep$xi[[m]], res$rep$eta[[m]], res$par2$delta[m])))
+  dev_rep.fun(Y=Y, res$rep$theta[[m]], res$rep$beta[[m]], res$rep$xi[[m]], res$rep$eta[[m]], res$par2$delta[m])))
 
 D_est <- D_est.fun(n.rep = 10000, n.burnin = 3000, res = res)
 
@@ -138,10 +119,8 @@ Note: The formula we use here defines the DIC as the difference between doubled 
 
 Calculate the marginal DIC for the null model ($M_0$) without incorporating the cheating effect:
 ```{r example}
-source("mDIC.R")
-
 D_bar0 <- mean(sapply(nburnin:res$M, function(m) 
-  dev_rep.fun0(Y.real, res$rep$theta[[m]], res$rep$beta[[m]])))
+  dev_rep.fun0(Y=Y, res$rep$theta[[m]], res$rep$beta[[m]])))
 
 D_est0 <- D_est.fun0(n.rep = 10000, n.burnin = 3000, res = res)
 
@@ -156,20 +135,4 @@ Estimate the full model using the {M}C{M}C algorithm:
 ```{r example}
 source("mcmc_M2.R") ## Main function of MCMC for the full model
 ```
-
-
-```{r example}
-## Initials
-
-res2 <- M2.mcmc(Y = Y,
-                 t_resp = resp.T,
-                 par1 = par1.sim,
-                 par2 = par1.sim,
-                 M = 5000,
-                 L = 1000,
-                 K = 10,
-                 step.sizes = c(0.05, 0.02, 0.01))
-
-```
-
 The implementation of remaning procedures inc. model comparison should be similar to the above examples under the Reduced Model.
